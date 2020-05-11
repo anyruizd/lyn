@@ -1,6 +1,18 @@
 const http = require('http')
-const port = process.argv[2]
+const port = process.argv[2] || 8080
 const hostname = '127.0.0.1'
+
+function getUnixTime (time) {
+  return { "unixtime": time.getTime() }
+}
+
+function getParsedTime (time) {
+  return { 
+    "hour": time.getHours(),
+    "minute": time.getMinutes(),
+    "second": time.getSeconds()
+  }
+}
 
 const server = http.createServer((request, response) => {
   request.on('error', (error) => {
@@ -14,27 +26,18 @@ const server = http.createServer((request, response) => {
 
   const { url: rawUrl, method } = request
   const parsedUrl = new URL(rawUrl,`http://${hostname}:${port}`)
-  const date = new Date(parsedUrl.searchParams.get('iso'))
-  response.writeHead(200, { 'Content-Type': 'application/json' })
-  if (method === 'GET') {
-    if (parsedUrl.pathname === '/api/unixtime') {
-      const res = JSON.stringify({ "unixtime": date.getTime()})
-      response.end(res)
-    } else if (parsedUrl.pathname === '/api/parsetime') {
-      const hour = date.getHours()
-      const minutes = date.getMinutes()
-      const seconds = date.getSeconds()
+  const time = new Date(parsedUrl.searchParams.get('iso'))
+  let result = ''
 
-      const res = JSON.stringify(
-        { "hour": hour,
-          "minute": minutes,
-          "second": seconds
-        })
-      response.end(res)
-    } else {
-      response.statusCode = 404
-      response.end()
-    }
+  if(parsedUrl.pathname === '/api/unixtime') {
+    result = getUnixTime(time)
+  } else if (parsedUrl.pathname === '/api/parsetime') {
+    result = getParsedTime(time)
+  }
+  
+  if (method === 'GET' && result) {
+    response.writeHead(200, { 'Content-Type': 'application/json' })
+    response.end(JSON.stringify(result))
   } else {
     response.statusCode = 404
     response.end()
