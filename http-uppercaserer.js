@@ -6,7 +6,7 @@ const hostname = '127.0.0.1'
 
 const server = http.createServer((request, response) => {
 
-  if (request.method == 'POST') {
+  if (request.method === 'POST') {
     request
     .pipe(map(chunk => {
       return chunk.toString().toUpperCase()
